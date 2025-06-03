@@ -10,3 +10,4 @@ docker exec -it ollama ollama list
 ## install other libary next js
 docker exec -it <container_name_or_id> /bin/sh# AI-CHAT
 # AI-CHAT
+# AI-CHAT
