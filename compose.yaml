@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile # จะใช้ Dockerfile ที่เราปรับแก้แล้ว
+        ports:
+            - "3000:3000"
+        # ลบ volumes: - ./frontend:/app ออก เพราะโค้ดถูก COPY เข้าไปใน Image แล้ว
+        # เก็บ - /app/node_modules ไว้ได้ ถ้าคุณเคยใช้สำหรับแคช node_modules ตอน dev
+        # แต่ใน production build ที่ดีที่สุดคือ COPY node_modules ที่จำเป็นเข้าไปใน image เลย
+        # ดังนั้น เราจะลบ volumes: - /app/node_modules ด้วย
+        volumes:
+            # ถ้าคุณยังต้องการให้ volumes นี้สำหรับ persist ข้อมูลบางอย่างที่ไม่ใช่โค้ด
+            # เช่น config files หรือ logs, คุณสามารถเพิ่มได้ที่นี่
+            # แนะนำให้ลบ /app/node_modules ใน production
+            # - /path/to/your/custom/configs:/app/configs
+            # - /app/logs:/var/log/app
+            # ไม่จำเป็นต้องมี volumes สำหรับโค้ดหรือ node_modules อีกต่อไป
+        environment:
+            # สำหรับ Production, CHOKIDAR_USEPOLLING และ WATCHPACK_POLLING ไม่จำเป็น
+            # แต่ OLLAMA_BASE_URL ยังคงจำเป็น
+            - OLLAMA_BASE_URL=http://ollama:11434
+            - NODE_ENV=production # ตั้งค่า NODE_ENV ใน compose.yaml ด้วย (แต่ Dockerfile ก็ตั้งแล้ว)
+        restart: unless-stopped
+        depends_on:
+            - ollama
+
+    ollama:
+        image: ollama/ollama
+        container_name: ollama
+        ports:
+            - "11434:11434"
+        volumes:
+            - ollama_data:/root/.ollama
+        command: serve
+        restart: unless-stopped
+        # หากใช้ GPU ของ NVIDIA (RTX)
+        # runtime: nvidia
+        # environment:
+        #     - NVIDIA_VISIBLE_DEVICES=all
+        #     - NVIDIA_DRIVER_CAPABILITIES=all
+        # หากใช้ GPU ของ AMD (RX 6000 Series)
+        # environment:
+        #     - HSA_OVERRIDE_GFX_VERSION=10.3.0
+        # deploy:
+        #     resources:
+        #         reservations:
+        #             devices:
+        #                 - driver: amd
+        #                   count: all
+        #                   capabilities: [gpu]
+
+volumes:
+    ollama_data:
+
+
+
+
+    
+
+# # compose.yaml
+# version: '3.8'
+
+# services:
+#     frontend:
+#         build:
+#             context: ./frontend # เปลี่ยนถ้า Next.js ไม่ได้อยู่ใน ./frontend
+#             dockerfile: Dockerfile
+#         ports:
+#             - "3000:3000"
+#         volumes:
+#             - ./frontend:/app
+#             - /app/node_modules
+#         environment:
+#             - CHOKIDAR_USEPOLLING=true
+#             - WATCHPACK_POLLING=true
+#             - OLLAMA_BASE_URL=http://ollama:11434
+#         restart: unless-stopped
+#         depends_on:
+#             - ollama
+
+#     ollama:
+#         image: ollama/ollama
+#         container_name: ollama
+#         ports:
+#             - "11434:11434"
+#         volumes:
+#             - ollama_data:/root/.ollama
+#         command: serve
+#         restart: unless-stopped
+
+# volumes:
+#     ollama_data:
